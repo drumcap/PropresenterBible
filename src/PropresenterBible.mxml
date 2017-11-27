@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
+					   xmlns:s="library://ns.adobe.com/flex/spark"
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   xmlns:net="flash.net.*"
+					   applicationComplete="windowedapplication1_applicationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			private var sqlConnection:SQLConnection;
+			private var resultAC:ArrayCollection;
+			
+			public var prefsFile:File;
+			[Bindable] public var prefsXML:XML;
+			public var stream:FileStream;
+			
+			/**
+			 * 북 리스트 컬렉션
+			 */
+			private var bookList:ArrayList = new ArrayList([
+				{code:"GEN", name:"창세기"},
+				{code:"EXO", name:"출애굽기"},
+				{code:"LEV", name:"레위기"},
+				{code:"NUM", name:"민수기"},
+				{code:"DEU", name:"신명기"},
+				{code:"JOS", name:"여호수아"},
+				{code:"JDG", name:"사사기"},
+				{code:"RUT", name:"룻기"},
+				{code:"1SA", name:"사무엘상"},
+				{code:"2SA", name:"사무엘하"},
+				{code:"1KI", name:"열왕기상"},
+				{code:"2KI", name:"열왕기하"},
+				{code:"1CH", name:"역대상"},
+				{code:"2CH", name:"역대하"},
+				{code:"EZR", name:"에스라"},
+				{code:"NEH", name:"느헤미야"},
+				{code:"EST", name:"에스더"},
+				{code:"JOB", name:"욥기"},
+				{code:"PSA", name:"시편"},
+				{code:"PRO", name:"잠언"},
+				{code:"ECC", name:"전도서"},
+				{code:"SNG", name:"아가"},
+				{code:"ISA", name:"이사야"},
+				{code:"JER", name:"예레미야"},
+				{code:"LAM", name:"예레미야애가"},
+				{code:"EZK", name:"에스겔"},
+				{code:"DAN", name:"다니엘"},
+				{code:"HOS", name:"호세아"},
+				{code:"JOL", name:"요엘"},
+				{code:"AMO", name:"아모스"},
+				{code:"OBA", name:"오바댜"},
+				{code:"JON", name:"요나"},
+				{code:"MIC", name:"미가"},
+				{code:"NAM", name:"나훔"},
+				{code:"HAB", name:"하박국"},
+				{code:"ZEP", name:"스바냐"},
+				{code:"HAG", name:"학개"},
+				{code:"ZEC", name:"스가랴"},
+				{code:"MAL", name:"말라기"},
+				{code:"MAT", name:"마태복음"},
+				{code:"MRK", name:"마가복음"},
+				{code:"LUK", name:"누가복음"},
+				{code:"JHN", name:"요한복음"},
+				{code:"ACT", name:"사도행전"},
+				{code:"ROM", name:"로마서"},
+				{code:"1CO", name:"고린도전서"},
+				{code:"2CO", name:"고린도후서"},
+				{code:"GAL", name:"갈라디아서"},
+				{code:"EPH", name:"에베소서"},
+				{code:"PHP", name:"빌립보서"},
+				{code:"COL", name:"골로새서"},
+				{code:"1TH", name:"데살로니가전서"},
+				{code:"2TH", name:"데살로니가후서"},
+				{code:"1TI", name:"디모데전서"},
+				{code:"2TI", name:"디모데후서"},
+				{code:"TIT", name:"디도서"},
+				{code:"PHM", name:"빌레몬서"},
+				{code:"HEB", name:"히브리서"},
+				{code:"JAS", name:"야고보서"},
+				{code:"1PE", name:"베드로전서"},
+				{code:"2PE", name:"베드로후서"},
+				{code:"1JN", name:"요한1서"},
+				{code:"2JN", name:"요한2서"},
+				{code:"3JN", name:"요한3서"},
+				{code:"JUD", name:"유다서"},
+				{code:"REV", name:"요한계시록"}]);
+			
+			protected function windowedapplication1_applicationCompleteHandler(event:FlexEvent):void
+			{
+				openDatabase();
+				fileReference.addEventListener(Event.COMPLETE, onSaveComplete);
+				fileReference.addEventListener(Event.CANCEL, onSaveCancel);
+			}
+			
+			private function openDatabase():void
+			{
+				// STEP1 : DB파일은 알아서 구하세요 ^_^ - 개역한글은 저작권 Free라 올려두었습니다
+				var file:File = File.applicationDirectory.resolvePath("kofirst.db"); //개역한글
+//				var file:File = File.applicationDirectory.resolvePath("renewedkor.db"); //개역개정
+//				var file:File = File.applicationDirectory.resolvePath("kostandardnewtrans.db"); //표준새번역
+//				var file:File = File.applicationDirectory.resolvePath("komodernlang.db"); //현대어
+				
+				if (!file.exists) {
+					Alert.show("성경 SQLite DB 파일이 없습니다");
+					return;
+				}
+
+				sqlConnection = new SQLConnection();
+				sqlConnection.open(file);
+				
+				var stmtFindAll:SQLStatement = new SQLStatement();
+				stmtFindAll.addEventListener(SQLErrorEvent.ERROR, onSqlError);
+				stmtFindAll.sqlConnection = sqlConnection;
+				stmtFindAll.text = "SELECT * FROM BIBLE";
+				stmtFindAll.execute();
+				
+				resultAC = new ArrayCollection(stmtFindAll.getResult().data);
+				
+				if (resultAC.length == 0) {
+					Alert.show("성경 SQLite DB 테이블이 BIBLE이 아닙니다");
+					return;
+				}
+				
+				createXMLData();
+			}
+
+			private function onSqlError(event:SQLErrorEvent):void
+			{
+				Alert.show("성경 SQLite DB 테이블이 BIBLE이 아닙니다"+event.text);
+			}
+			
+			private var book_idx:int = 0; //성경 권별 인덱스
+			private var chapter_idx:int = 0; //성경 장 인덱스
+			
+			/**
+			 * XML 파일 생성
+			 */
+			private function createXMLData():void 
+			{
+				prefsXML = <usx version="2.0"/>;
+				prefsXML.appendChild(<book code={bookList.getItemAt(book_idx).code} style='id'>{bookList.getItemAt(book_idx).name}</book>);
+				prefsXML.appendChild(<para style='mt'>{bookList.getItemAt(book_idx).name}</para>);
+				for each (var item:Object in resultAC) {
+					if (item.book !== book_idx+1)
+						continue;
+					
+					if (item.chapter !== chapter_idx) {
+						chapter_idx = item.chapter;
+						prefsXML.appendChild(<chapter number={item.chapter} style="c" />);
+					}
+					
+					prefsXML.appendChild(<para style='p'><verse number={item.verse} style='v'/>{item.content}</para>);
+				}
+				var outputFileName:String = bookList.getItemAt(book_idx).code+".usx";
+				var outputString:String = '<?xml version="1.0" encoding="utf-8"?>\n';
+				outputString += prefsXML.toXMLString();
+				outputString = outputString.replace(/\n/g, File.lineEnding);
+				trace("output file name :", outputFileName);					
+				fileReference.save(outputString, outputFileName);
+				book_idx++;
+			}
+			
+			protected function onSaveComplete(event:Event):void
+			{
+				chapter_idx = 0; //파일 저장전 권별 인덱스 초기화
+				if (bookList.length > book_idx) 
+					createXMLData();
+			}
+			
+			protected function onSaveCancel(event:Event):void
+			{
+				Alert.show("파일저장이 취소되었습니다");
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<net:FileReference id="fileReference"/>
+	</fx:Declarations>
+	
+</s:WindowedApplication>

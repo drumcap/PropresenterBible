@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="Flex" version="4">
+  <component name="FlexBuildConfigurationManager" active="PropresenterBible">
+    <configurations>
+      <configuration name="PropresenterBible" target-platform="Desktop" main-class="PropresenterBible" output-file="PropresenterBible.swf" output-folder="$MODULE_DIR$/bin-debug">
+        <dependencies>
+          <entries>
+            <entry library-id="a212f243-c655-4a26-8fbc-9b95a2200b8b">
+              <dependency linkage="Merged" />
+            </entry>
+          </entries>
+          <sdk name="4.6.0" />
+        </dependencies>
+        <compiler-options>
+          <map>
+            <entry key="compiler.locale" value="en_US" />
+          </map>
+        </compiler-options>
+        <packaging-air-desktop use-generated-descriptor="false" custom-descriptor-path="$MODULE_DIR$/src/PropresenterBible-app.xml" package-file-name="PropresenterBible">
+          <files-to-package>
+            <FilePathAndPathInPackage file-path="$MODULE_DIR$/src/kofirst.db" path-in-package="kofirst.db" />
+            <FilePathAndPathInPackage file-path="$MODULE_DIR$/src/renewedkor.db" path-in-package="renewedkor.db" />
+            <FilePathAndPathInPackage file-path="$MODULE_DIR$/src/kjv-en.rvbible" path-in-package="kjv-en.rvbible" />
+            <FilePathAndPathInPackage file-path="$MODULE_DIR$/src/komodernlang.db" path-in-package="komodernlang.db" />
+            <FilePathAndPathInPackage file-path="$MODULE_DIR$/src/kostandardnewtrans.db" path-in-package="kostandardnewtrans.db" />
+          </files-to-package>
+        </packaging-air-desktop>
+        <packaging-android />
+        <packaging-ios />
+      </configuration>
+    </configurations>
+    <compiler-options />
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="jdk" jdkName="4.6.0" jdkType="Flex SDK Type (new)" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library type="flex">
+        <properties id="a212f243-c655-4a26-8fbc-9b95a2200b8b" />
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/libs" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/libs" recursive="false" />
+      </library>
+    </orderEntry>
+  </component>
+</module>
